@@ -1,0 +1,15 @@
+;;;; Emacs Bookmark Format Version 1 ;;;;
+;;; This format is meant to be slightly human-readable;
+;;; nevertheless, you probably don't want to edit it.
+;;; -*- End Of Bookmark File Format Version Stamp -*-
+(("Project-root"
+ (filename . "/ssh:Houston_local:/data/gpfs/Users/l0494061/Project/")
+ (front-context-string)
+ (rear-context-string . "7 11:32 tRTM_DG\n")
+ (position . 383))
+("main-Bernstein"
+ (filename . "~/Documents/Fortran/Bernstein/main.f90")
+ (front-context-string . "  use m_adjoint\n")
+ (rear-context-string . " use m_acoustic\n")
+ (position . 84))
+)
