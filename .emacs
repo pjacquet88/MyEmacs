@@ -7,9 +7,19 @@
 ;;; Set location for external packages.
 (add-to-list 'load-path "~/.emacs.d/some_el_file")
 
-
-
- 
+(custom-set-variables
+ '(spacemacs-theme-custom-colors
+   '((border . "#339933")
+     (bg1 . "#212936")
+     (bg2 . "#212936")
+     (comment-bg . "#212936")
+     (head1-bg . "#212936")
+     (head2-bg . "#212936")
+     (head3-bg . "#212936")
+     (head4-bg . "#212936")
+     (cblk-ln-bg . "#212936")
+     (cblk-bg . "#212936"))))
+  
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -33,6 +43,16 @@
  '(spacemacs-theme-custom-colors
    (quote
     ((act1 . "#ff0000")
+     (border . "#339933")
+     (bg1 . "#212936")
+     (bg2 . "#212936")
+     (comment-bg . "#212936")
+     (head1-bg . "#212936")
+     (head2-bg . "#212936")
+     (head3-bg . "#212936")
+     (head4-bg . "#212936")
+     (cblk-ln-bg . "#212936")
+     (cblk-bg . "#212936")
      (act2 . "#ff0000")
      (base . "#ffffff"))))
  '(vc-annotate-background "#242730")
@@ -59,6 +79,8 @@
  '(vc-annotate-very-old-color nil))
 
 
+
+
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -66,7 +88,7 @@
  ;; If there is more than one, they won't work right.
  '(default ((t (:inherit nil :stipple nil :background "#212936" :foreground "gray80" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 128 :width normal :foundry "DAMA" :family "Ubuntu Mono"))))
  '(font-lock-comment-face ((t (:foreground "cadet blue"))))
- '(font-lock-function-name-face ((t (:foreground "deep sky blue"))))
+ '(font-lock-function-name-face ((t (:inherit bold :foreground "deep sky blue"))))
  '(font-lock-keyword-face ((t (:foreground "DarkGoldenrod2" :weight bold))))
  '(font-lock-string-face ((t (:foreground "pale violet red"))))
  '(font-lock-type-face ((t (:inherit bold :foreground "brown"))))
@@ -105,8 +127,10 @@ There are two things you can do about this warning:
 
 
 
-;; ------- MY CONFIG START HERE --------------------------
 
+
+
+;; ------- MY CONFIG START HERE --------------------------
 
 ;; Move ~ and # file into : ~/.emacs.d/var/backup/
 (require 'no-littering)
