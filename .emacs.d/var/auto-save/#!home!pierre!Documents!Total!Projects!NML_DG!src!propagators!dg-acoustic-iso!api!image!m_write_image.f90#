@@ -1,0 +1,395 @@
+!>
+!! \file       m_write_image.f90
+!! \brief      Implementation of user API for writing image arrays to disk.
+!! \author     TOTAL E&P R&T
+!! \copyright  TOTAL E&P. All Rights reserved
+!<
+
+!>
+!! \brief [module] Provides implementation of user API for writing image
+!!                 arrays to disk.
+!!
+!<
+
+module m_write_image
+
+#include "error_handler_fortran.h"
+
+  !! $SABL/core_lib/system_lib/sys_utils/Datatype_Kind/
+  use m_datatype_kind,           only : REAL64, REAL32, INT64
+
+  !! $SABL/shot_lib/context/
+  use m_shot_ctx,                only : t_shot
+
+  !! $ACL/new_grid/unstructured/io/vtk_output/
+  use m_vtu_output_type,         only : t_vtu_output
+
+  !! $ACL/new_grid/unstructured/io/vtk_output/
+  use m_vtu_output,              only : initialize_vtu_output, &
+                                        finalize_vtu_output,   &
+                                        add_vtu_output
+
+  !! $ACL/new_grid/unstructured/io/vtk_output/
+  use m_unstructured_pack_array, only : unstructured_pack_one_array
+
+  !! $NML/propagators/dg-acoustic-iso/types/
+  use m_image_type,              only : t_image
+
+  !! $NML/utilities/io/
+  use m_output_settings,         only : t_output_settings
+
+  !! $NML/propagators/dg-acoustic-iso/types/
+  use m_propagator_grid_type,    only : t_propagator_grid
+
+  implicit none
+
+  private
+
+  public :: write_image
+
+  private :: build_base_file_name
+
+contains
+
+
+  !>
+  !! \brief
+  !! Writes the entries of the image structure as dictated by the output
+  !! settings.
+  !!
+  !! \param[in]   image            image type to output
+  !! \param[in]   output_settings  Output configuration
+  !! \param[in]   grid             Grid for propagator
+  !! \param[out]  ierr             Error code (0 if no error)
+  !! \param[out]  errmsg           Error message
+  !! \param[in]   o_shot           Optional to shot being written for file name
+  !! \param[in]   o_crop           Optional to crop PML, default is FALSE
+  !! \param[in]   o_io_mode        Optional to change io mode, default is "mpi"
+  !!
+  !! \details
+  !! We assume that the index of the image we want to output is 1,
+  !! whatever ODE solver is chosen.
+  !!
+  !! \note `o_crop` and `o_io_mode` are passed along to the array writing routine.
+  !<
+
+  subroutine write_image(image, output_settings, grid, &
+                         ierr, errmsg,                 &
+                         o_shot, o_crop, o_io_mode)
+
+    implicit none
+
+    type(t_image),              intent(in)  :: image
+    type(t_output_settings),    intent(in)  :: output_settings
+    type(t_propagator_grid),    intent(in)  :: grid
+    integer,                    intent(out) :: ierr
+    character(len=*),           intent(out) :: errmsg
+    type(t_shot), optional,     intent(in)  :: o_shot
+    logical, optional,          intent(in)  :: o_crop
+    character(len=*), optional, intent(in)  :: o_io_mode
+
+    ierr = 0
+    errmsg = ""
+
+    select case (grid%disc%integration_method)
+    case ('bernstein-bezier')
+
+      call write_image_bb(image, output_settings, grid,     &
+                          ierr, errmsg,                     &
+                          o_shot, o_crop, o_io_mode)
+      error_return(ierr, errmsg, NO_MESSAGE)
+
+    case default
+
+      call write_image_nodal(image, output_settings, grid,    &
+                             ierr, errmsg,                    &
+                             o_shot, o_crop, o_io_mode)
+      error_return(ierr, errmsg, NO_MESSAGE)
+
+    end select
+
+  end subroutine write_image
+
+
+  !>
+  !! \brief
+  !! Writes the entries of the image structure as dictated by the output
+  !! settings.
+  !!
+  !! \param[in]   image            image type to output
+  !! \param[in]   output_settings  Output configuration
+  !! \param[in]   grid             Grid for propagator
+  !! \param[out]  ierr             Error code (0 if no error)
+  !! \param[out]  errmsg           Error message
+  !! \param[in]   o_shot           Optional to shot being written for file name
+  !! \param[in]   o_crop           Optional to crop PML, default is FALSE
+  !! \param[in]   o_io_mode        Optional to change io mode, default is "mpi"
+  !!
+  !! \details
+  !! We assume that the index of the image we want to output is 1,
+  !! whatever ODE solver is chosen.
+  !!
+  !! #### Error States ####
+  !!   1. (_ierr=1_) Invalid image specified.
+  !!
+  !! \note `o_crop` and `o_io_mode` are passed along to the array writing routine.
+  !<
+
+  subroutine write_image_nodal(image, output_settings, grid,     &
+                               ierr, errmsg,                     &
+                               o_shot, o_crop, o_io_mode)
+
+    implicit none
+
+    type(t_image),              intent(in)  :: image
+    type(t_output_settings),    intent(in)  :: output_settings
+    type(t_propagator_grid),    intent(in)  :: grid
+    integer,                    intent(out) :: ierr
+    character(len=*),           intent(out) :: errmsg
+    type(t_shot), optional,     intent(in)  :: o_shot
+    logical, optional,          intent(in)  :: o_crop
+    character(len=*), optional, intent(in)  :: o_io_mode
+
+    logical            :: crop
+    character(len=10)  :: io_mode
+    integer            :: it
+    integer            :: shot_id
+
+    logical            :: is_3D
+    integer            :: i
+    character(len=768) :: basename, usrmsg
+    character(len=8)   :: it_str
+
+    real, allocatable   :: solution(:)
+    integer             :: i_wf
+    type(t_vtu_output)  :: vtu_output
+
+    !! Same tag for all elements because pure acoustic propagation
+    integer, parameter  :: i_tag = 1
+
+    ierr = 0
+    errmsg = ""
+
+    !! Return when no images chosen
+    if (output_settings%output_set%size .lt. 1) return
+
+k    crop = .false.
+    if (present(o_crop)) crop = o_crop
+
+    io_mode = "mpi"
+    if (present(o_io_mode)) io_mode = o_io_mode
+
+    shot_id = -huge(1)
+    if (present(o_shot)) shot_id = o_shot%i_shot
+
+    is_3D = (grid%mesh_subdomain%dim .eq. 3)
+
+
+    !! Assume that the image index is 1
+    !! whatever ODE solver is chosen.
+    i_wf = 1
+
+    !! Construct the base-name of the vtu-output file
+    !! Observe that there are one file containing all chosen images
+    call build_base_file_name(basename, output_settings%basename,   &
+                              shot_id, ierr, errmsg)
+    error_return(ierr, errmsg, NO_MESSAGE)
+
+    !! Prepare for the vtu-output once for all chosen images
+    call initialize_vtu_output(vtu_output, basename,         &
+                               grid%mesh_subdomain, grid%dd, &
+                               ierr, errmsg)
+    error_return(ierr, errmsg, NO_MESSAGE)
+
+    !! Packed array for one image containing only the vertices
+    allocate(solution(vtu_output%n_node), STAT=ierr)
+    error_return(ierr, errmsg, "Error allocating solution.")
+
+
+    do i = 1, output_settings%output_set%size
+
+      select case(output_settings%output_set%values(i))
+
+        case("image")
+
+          call unstructured_pack_one_array(solution,                        &
+                                 image%image(:),                            &
+                                 grid%disc%element_to_wavefield(:,i_tag),   &
+                                 grid%disc%dg_op%vertex_to_volume,          &
+                                 grid%disc%order_index_list,                &
+                                 vtu_output,                                &
+                                 ierr, errmsg)
+          error_return(ierr, errmsg, NO_MESSAGE)
+
+          call add_vtu_output(vtu_output, solution, &
+                              "Image",              &
+                              ierr, errmsg)
+          error_return(ierr, errmsg, NO_MESSAGE)
+
+        case("illum_src")
+
+          call unstructured_pack_one_array(solution,                        &
+                                 image%illum_src(:),                        &
+                                 grid%disc%element_to_wavefield(:,i_tag),   &
+                                 grid%disc%dg_op%vertex_to_volume,          &
+                                 grid%disc%order_index_list,                &
+                                 vtu_output,                                &
+                                 ierr, errmsg)
+          error_return(ierr, errmsg, NO_MESSAGE)
+
+          call add_vtu_output(vtu_output, solution,  &
+                              "Source Illumination", &
+                              ierr, errmsg)
+          error_return(ierr, errmsg, NO_MESSAGE)
+
+        case("illum_rcv")
+
+          call unstructured_pack_one_array(solution,                        &
+                                 image%illum_rcv(:),                        &
+                                 grid%disc%element_to_wavefield(:,i_tag),   &
+                                 grid%disc%dg_op%vertex_to_volume,          &
+                                 grid%disc%order_index_list,                &
+                                 vtu_output,                                &
+                                 ierr, errmsg)
+          error_return(ierr, errmsg, NO_MESSAGE)
+
+          call add_vtu_output(vtu_output, solution,    &
+                              "Reciever Illumination", &
+                              ierr, errmsg)
+          error_return(ierr, errmsg, NO_MESSAGE)
+
+        case("image_hx")
+
+          call unstructured_pack_one_array(solution,                        &
+                                 image%image_hx(:),                         &
+                                 grid%disc%element_to_wavefield(:,i_tag),   &
+                                 grid%disc%dg_op%vertex_to_volume,          &
+                                 grid%disc%order_index_list,                &
+                                 vtu_output,                                &
+                                 ierr, errmsg)
+          error_return(ierr, errmsg, NO_MESSAGE)
+
+          call add_vtu_output(vtu_output, solution, &
+                              "Image HX",           &
+                              ierr, errmsg)
+          error_return(ierr, errmsg, NO_MESSAGE)
+
+        case("image_hy")
+
+          call unstructured_pack_one_array(solution,                        &
+                                 image%image_hy(:),                         &
+                                 grid%disc%element_to_wavefield(:,i_tag),   &
+                                 grid%disc%dg_op%vertex_to_volume,          &
+                                 grid%disc%order_index_list,                &
+                                 vtu_output,                                &
+                                 ierr, errmsg)
+          error_return(ierr, errmsg, NO_MESSAGE)
+
+          call add_vtu_output(vtu_output, solution, &
+                              "Image HY",           &
+                              ierr, errmsg)
+          error_return(ierr, errmsg, NO_MESSAGE)
+
+        case default
+
+          ierr = 1
+          usrmsg = "Invalid image specified: " // &
+                   output_settings%output_set%values(i)
+          error_return(ierr, errmsg, usrmsg)
+
+      end select
+
+    end do
+
+    deallocate(solution, STAT=ierr)
+    error_return(ierr, errmsg, "Error deallocating solution.")
+
+    call finalize_vtu_output(vtu_output, ierr, errmsg)
+    error_return(ierr, errmsg, NO_MESSAGE)
+
+  end subroutine write_image_nodal
+
+  !>
+  !! \brief
+  !! Writes the entries of the image structure as dictated by the output
+  !! settings.
+  !!
+  !! \param[in]   image        image type to output
+  !! \param[in]   output_settings  Output configuration
+  !! \param[in]   grid             Grid for propagator
+  !! \param[out]  ierr             Error code (0 if no error)
+  !! \param[out]  errmsg           Error message
+  !! \param[in]   o_shot           Optional to shot being written for file name
+  !! \param[in]   o_crop           Optional to crop PML, default is FALSE
+  !! \param[in]   o_io_mode        Optional to change io mode, default is "mpi"
+  !!
+  !! \details
+  !! We assume that the index of the image we want to output is 1,
+  !! whatever ODE solver is chosen.
+  !!
+  !! #### Error States ####
+  !!   1. (_ierr=1_) Invalid image specified.
+  !!
+  !! \note `o_crop` and `o_io_mode` are passed along to the array writing routine.
+  !<
+
+  subroutine write_image_bb(image, output_settings, grid, &
+                            ierr, errmsg,                 &
+                            o_shot, o_crop, o_io_mode)
+
+    implicit none
+
+    type(t_image),              intent(in)  :: image
+    type(t_output_settings),    intent(in)  :: output_settings
+    type(t_propagator_grid),    intent(in)  :: grid
+    integer,                    intent(out) :: ierr
+    character(len=*),           intent(out) :: errmsg
+    type(t_shot), optional,     intent(in)  :: o_shot
+    logical, optional,          intent(in)  :: o_crop
+    character(len=*), optional, intent(in)  :: o_io_mode
+
+    ierr = 0
+    errmsg = ""
+
+    ierr = 1
+    error_return(ierr, errmsg, 'BB has no VTK-output!')
+
+  end subroutine write_image_bb
+
+  !>
+  !! \brief
+  !! Local helper to build base file names.
+  !!
+  !! \param[in,out]  filename   Output string
+  !! \param[in]      basename   Basename for the filename
+  !! \param[in]      it         Current iteration (-huge(1) => ignore)
+  !! \param[in]      shot_id    Current shot number (-huge(1) => ignore)
+  !! \param[out]     ierr       Error code (0 if no error)
+  !! \param[out]     errmsg     Error message
+  !<
+
+  subroutine build_base_file_name(filename, basename, shot_id, ierr, errmsg)
+
+    implicit none
+
+    character(len=*),       intent(inout) :: filename
+    character(len=*),       intent(in)    :: basename
+    integer,                intent(in)    :: shot_id
+    integer,                intent(out)   :: ierr
+    character(len=*),       intent(out)   :: errmsg
+
+
+    ierr = 0
+    errmsg = ""
+
+    if (shot_id .ne. -huge(1)) then
+      !! filename = <basename>_<shot_id>
+      write(filename, "(A,I0.5)") trim(adjustl(basename)) // "_", shot_id
+    else
+      !! filename = <basename>
+      write(filename, "(A)") trim(adjustl(basename)) // "_stacked"
+    end if
+
+  end subroutine build_base_file_name
+
+end module m_write_image

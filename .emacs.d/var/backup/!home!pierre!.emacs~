@@ -9,12 +9,31 @@
 
 
 
- 
-(custom-set-variables
+ (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+
+  (custom-set-variables '(spacemacs-theme-custom-colors
+			'((border . "#339933")
+			  (bg1 . "#212936")
+			  (bg2 . "#212936")
+			  (comment-bg . "#212936")
+			  (head1-bg . "#212936")
+			  (head2-bg . "#212936")
+			  (head3-bg . "#212936")
+			  (head4-bg . "#212936")
+			  (cblk-ln-bg . "#212936")
+			  (cblk-bg . "#212936"))))
+
+
+ ;; bg1 de base = #292b2e
+ ;; test 1 #212936
+ ;; test2 #292b3e
+
+
+  
  '(custom-enabled-themes (quote (spacemacs-dark)))
  '(custom-safe-themes
    (quote
@@ -28,7 +47,7 @@
  '(nil nil t)
  '(package-selected-packages
    (quote
-    (no-littering helm-projectile helm-core helm srcery-theme ggtags projectile fill-column-indicator magit spacemacs-theme neotree auto-complete auto-correct)))
+    (no-littering helm-projectile helm-core helm doom-themes srcery-theme ggtags projectile fill-column-indicator magit spacemacs-theme neotree auto-complete auto-correct)))
  '(pdf-view-midnight-colors (quote ("#b2b2b2" . "#292b2e")))
  '(spacemacs-theme-custom-colors
    (quote

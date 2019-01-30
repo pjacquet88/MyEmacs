@@ -1,0 +1,207 @@
+!>
+!! \file       m_write_array.f90
+!! \brief      Implementation of user API for writing model arrays to disk.
+!! \author     TOTAL E&P R&T
+!! \copyright  TOTAL E&P. All Rights reserved
+!<
+
+!>
+!! \brief [module] Provides implementation of user API for writing wavefield
+!!                 arrays to disk.
+!!
+!<
+
+module m_write_array
+
+#include "error_handler_fortran.h"
+  use mpi
+
+  !! $SABL/core_lib/system_lib/io_lib/Byte_Utils/Fortran/
+  use m_get_unit,                  only : get_new_unit
+  
+  !! $ACL/new_grid/unstructured/io/vtk_output/
+  use m_vtu_output_type,         only : t_vtu_output
+
+  !! $ACL/new_grid/unstructured/io/vtk_output/
+  use m_vtu_output,              only : initialize_vtu_output, &
+                                        finalize_vtu_output,   &
+                                        add_vtu_output
+
+  !! $NML/propagators/hdg-acoustic-iso/types/
+  use m_propagator_grid_type,    only : t_propagator_grid
+  
+  !! $APPLICATION/propagator/$(propagator)/types/
+  use m_model_parameter_type,    only : t_model_parameter
+
+  implicit none
+  
+  private
+  public  :: write_model
+
+contains
+
+
+  !>
+  !! \brief
+  !! Writes the acoustic models: velocity and density
+  !!
+  !! \param[in]   model            model type 
+  !! \param[in]   path             path where to save
+  !! \param[in]   grid             Grid for propagator
+  !! \param[out]  ierr             Error code (0 if no error)
+  !! \param[out]  errmsg           Error message
+  !! \param[in]   o_iter           Optional iterations
+  !! \param[in]   o_freq           Optional frequency
+  !! \param[in]   o_io_mode        Optional io_mode (mpi by default)
+  !<
+  subroutine write_model(model, path, grid, ierr, errmsg,      &
+                         o_iter, o_freq, o_io_mode)
+
+    implicit none
+
+    type(t_model_parameter),    intent(in)  :: model
+    character(len=*),           intent(in)  :: path
+    type(t_propagator_grid),    intent(in)  :: grid
+    integer,                    intent(out) :: ierr
+    character(len=*),           intent(out) :: errmsg
+    integer,          optional, intent(in)  :: o_iter
+    complex,          optional, intent(in)  :: o_freq
+    character(len=*), optional, intent(in)  :: o_io_mode
+    
+    character(len=10)  :: io_mode
+    complex            :: freq
+    integer            :: iter,c,ifield
+    logical            :: freq_flag,iter_flag
+    character(len=768) :: basename,pathname
+    real, allocatable  :: solution(:)
+    type(t_vtu_output) :: vtu_output
+
+    ierr = 0
+    errmsg = ""
+
+    io_mode = "mpi"
+    if (present(o_io_mode)) io_mode = o_io_mode
+
+    freq_flag=.false.
+    freq=cmplx(0.0,0.0)
+    if (present(o_freq)) then
+      freq     = o_freq
+      freq_flag=.true.
+    endif
+
+    iter_flag=.false.
+    iter=0
+    if (present(o_iter)) then
+      iter = o_iter
+      iter_flag=.true.
+    endif
+
+    !! Construct the base-name of the vtu-output file
+    !! Observe that there are one file containing all chosen fields
+    pathname=trim(adjustl(path)) // "/model"
+    call build_base_file_name(basename, pathname, "model",      &
+                              iter_flag, iter, freq_flag, freq, &
+                              ierr, errmsg)
+    error_return(ierr, errmsg, NO_MESSAGE)
+
+    !! Prepare for the vtu-output once for all chosen wavefields
+    call initialize_vtu_output(vtu_output, basename,         &
+                               grid%mesh_subdomain, grid%dd, &
+                               ierr, errmsg)
+    error_return(ierr, errmsg, NO_MESSAGE)
+
+    !! Packed array for one wavefield containing only the vertices
+    allocate(solution(vtu_output%n_node), STAT=ierr)
+    error_return(ierr, errmsg, "Error allocating solution.")
+    
+    !! acoustic velocity and density
+    do ifield=1,2
+      !! solution has to be dealt with 
+      solution=0.0
+      select case (ifield)
+        
+        case(1)
+          do c=1,grid%mesh_subdomain%n_element
+            solution(vtu_output%n_dof_per_element*(c-1)+1:            &
+                     vtu_output%n_dof_per_element*c) = model%vp(c)
+          enddo
+
+          call add_vtu_output(vtu_output, solution,     &
+                              "velocity", ierr, errmsg)
+          error_return(ierr, errmsg, NO_MESSAGE)
+
+        case(2)
+        
+          do c=1,grid%mesh_subdomain%n_element
+            solution(vtu_output%n_dof_per_element*(c-1)+1:            &
+                     vtu_output%n_dof_per_element*c) = model%rho(c)
+          enddo
+          call add_vtu_output(vtu_output, solution,     &
+                              "density", ierr, errmsg)
+          error_return(ierr, errmsg, NO_MESSAGE)
+          
+      end select
+    end do
+        
+
+    deallocate  (solution, STAT=ierr)
+    error_return(ierr, errmsg, "Error deallocating solution.")
+
+    call finalize_vtu_output(vtu_output, ierr, errmsg)
+    error_return(ierr, errmsg, NO_MESSAGE)
+
+  end subroutine write_model
+  
+  !>
+  !! \brief
+  !! Local helper to build base file names.
+  !!
+  !! \param[in,out]  filename   Output string
+  !! \param[in]      path       Basename for the path
+  !! \param[in]      keyword    keyword indicating the field
+  !! \param[in]      iter_flag  flag if iterations has to be indicated
+  !! \param[in]      iter       current iteration (only if iter_flag)    
+  !! \param[in]      freq_flag  flag if frequency has to be indicated
+  !! \param[in]      freq       current frequency
+  !! \param[out]     ierr       Error code (0 if no error)
+  !! \param[out]     errmsg     Error message
+  !<
+  subroutine build_base_file_name(filename, path, keyword,          &
+                                  iter_flag, iter, freq_flag, freq, &
+                                  ierr, errmsg)
+    implicit none
+
+    character(len=*),       intent(inout) :: filename
+    character(len=*),       intent(in)    :: path
+    character(len=*),       intent(in)    :: keyword
+    logical,                intent(in)    :: iter_flag
+    integer,                intent(in)    :: iter
+    logical,                intent(in)    :: freq_flag
+    complex,                intent(in)    :: freq
+    integer,                intent(out)   :: ierr
+    character(len=*),       intent(out)   :: errmsg
+
+
+    ierr   = 0
+    errmsg = ""
+
+    write(filename, "(A)") trim(adjustl(path))    // '/' // &
+                           trim(adjustl(keyword))
+
+    !! frequency
+    if (freq_flag) then
+      write(filename, "(2(A,E10.4))")  trim(adjustl(filename)) // &
+                                       "_frequency_", real(freq), &
+                                       "_", aimag(freq)
+    endif    
+    
+    !! iteration
+    if (iter_flag) then
+      write(filename, "(A,I0.5)")  trim(adjustl(filename)) // &
+                                   "_iteration_", iter
+    endif
+
+
+  end subroutine build_base_file_name
+
+end module m_write_array

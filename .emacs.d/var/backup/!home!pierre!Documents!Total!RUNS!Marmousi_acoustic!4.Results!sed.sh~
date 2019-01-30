@@ -1,0 +1,8 @@
+sed -i -e "s/..\/4.Results\/snap\///g" snap/*pvtu 
+sed -i -e "s/..\/4.Results\/snap_fwd\///g" snap_fwd/*pvtu 
+sed -i -e "s/..\/4.Results\/snap_bwd\///g" snap_bwd/*pvtu 
+sed -i -e "s/..\/4.Results\/image\///g" image/*pvtu 
+sed -i -e "s/..\/4.Results\/image2\///g" image2/*pvtu 
+sed -i -e "s/..\/4.Results\/image_bkp\///g" image_bkp/*pvtu 
+sed -i -e "s/..\/4.Results\/sismo\///g" sismo/*pvtu 
+sed -i -e "s/..\/4.Results\/work_dir\///g" work_dir/*pvtu 

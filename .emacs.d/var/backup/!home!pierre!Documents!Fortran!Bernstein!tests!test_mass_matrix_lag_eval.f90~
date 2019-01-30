@@ -1,0 +1,61 @@
+program main
+  use m_kind
+  use m_polynom
+  use m_matrix
+  use m_init_application
+  use m_acoustic
+
+  implicit none
+
+  !*************** Main Variables ***********************************************
+  type(acoustic_problem)              :: forward
+  integer                             :: i,j,k
+  real(mp),dimension(:),allocatable   :: x1
+  logical                             :: bool
+  real(mp)                            :: error
+  !******************************************************************************
+ 
+  call setup_parameters('forward')
+  bernstein=.false.
+  bool=.true.
+
+  call init_polynom(order)
+
+  allocate(x1(DoF*nb_elem)) 
+
+  x1=1.0_mp
+
+  call init_acoustic_problem(forward,nb_elem,DoF,time_scheme,velocity_data,     &
+                             density_data,total_length,final_time,alpha,        &
+                             bernstein,signal,boundaries,source_loc,receiver_loc)
+
+  error=abs(1.0_mp-dot_product(sparse_matmul(forward%M,x1),x1)/nb_elem)
+
+  print*,'test error :',error
+
+  if (mp.eq.sp) then
+     bool=(bool.and.(error.lt.1e-4_mp))
+  else if (mp.eq.dp) then
+     bool=(bool.and.(error.lt.1e-8_mp))
+  end if
+
+  call my_return(bool)
+
+  call free_acoustic_problem(forward)
+
+  !------------------------ Free Variables --------------------------------------
+  call free_polynom
+
+contains
+
+  subroutine my_return(bool)
+    logical,intent(in) :: bool
+
+    if (bool) then
+       print*,'Succeed'
+    else
+       ERROR STOP "TEST FAILED"
+    end if
+  end subroutine my_return
+
+end program main

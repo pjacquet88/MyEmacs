@@ -1,0 +1,59 @@
+import sys
+import numpy as np
+import matplotlib.pyplot as plt
+
+if (len(sys.argv)==3):
+    file_name=str(sys.argv[1])
+    fit_strategy=str(sys.argv[2])
+
+    if (file_name=="grad_DTA_dtapprox_L_RK4.dat"):
+        ref_name="ref_RK4.dat"
+    elif (file_name=="grad_DTA_dtapprox_L_RK4_M.dat"):
+        ref_name="ref_RK4.dat"
+    elif (file_name=="grad_DTA_dtapprox_B_RK4.dat"):
+        ref_name="ref_RK4.dat"
+    elif (file_name=="grad_DTA_dtapprox_B_RK4_M.dat"):
+        ref_name="ref_RK4.dat"
+    elif (file_name=="grad_ATD_L_RK4.dat"):
+        ref_name="ref_RK4.dat"
+    elif (file_name=="grad_ATD_B_RK4.dat"):
+        ref_name="ref_RK4.dat"
+    else:
+        ref_name="ref_AB3.dat"
+
+    ref=np.loadtxt(ref_name,skiprows=1)
+    file=np.loadtxt(file_name,skiprows=1)
+        
+    if (fit_strategy=="plateau"):
+        print('You chose to fit the gradients with the plateau strategy')
+    elif (fit_strategy=="maxval"):
+        print('You chose to fit the gradients with the maxval strategy')
+        ref[:,1]=ref[:,1]/(max(ref[1:-1,1]))
+        file[:,1]=file[:,1]/(max(file[1:-1,1]))
+    elif (fit_strategy=="mean"):
+        print('You chose to fit the gradients with the mean strategy')
+        ref[:,1]=ref[:,1]/(np.mean(ref[1:-1,1]))
+        file[:,1]=file[:,1]/(np.mean(file[1:-1,1]))
+    
+
+    error=np.linalg.norm(ref[1:-1,1]-file[1:-1,1])
+    error2=np.linalg.norm(ref[1:-1,1])
+
+
+    print('The error obtained is equal to :')
+    print(error/error2)
+
+    ref_graph= plt.plot(ref[:,1],label='Reference Gradient',color='red')
+    file_graph=plt.plot(file[:,1],label=file_name,color='blue')
+    plt.xlabel("elements")
+    plt.ylabel("Gradient")
+    plt.legend()
+
+    # from matplotlib2tikz import save as tikz_save
+    # tikz_save("test.tex")
+    
+    plt.show()
+
+else:
+    print("This program needs 2 arguments (c.f. README.txt)")
+    sys.exit()

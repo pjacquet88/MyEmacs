@@ -1,0 +1,21 @@
+import sys
+import numpy as np
+import matplotlib.pyplot as plt
+
+if (len(sys.argv)==2):
+    file_name=str(sys.argv[1])
+
+    file=np.loadtxt(file_name)
+
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plot.legend(file_name)
+
+    graph=plt.plot(file[:,0],file[:,1],label='graph',color='blue')
+
+    plt.show()    
+
+else:
+    print("File name needed")
+    sys.exit()
+    

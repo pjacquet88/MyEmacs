@@ -1,0 +1,12 @@
+rm -rf ../4.Results/snap/*
+rm -rf ../4.Results/image/*
+rm -rf ../4.Results/image2/*
+rm -rf ../4.Results/image_bkp/*
+rm -rf ../4.Results/sismo/*
+rm -rf ../4.Results/snap/*
+rm -rf ../4.Results/snap_bwd/*
+rm -rf ../4.Results/snap_fwd/*
+rm -rf *~
+rm -rf output
+rm -rf error
+rm -rf stack*

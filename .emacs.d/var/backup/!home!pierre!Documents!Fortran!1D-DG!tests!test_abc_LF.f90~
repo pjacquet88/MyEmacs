@@ -1,0 +1,67 @@
+program main
+  use m_kind
+  use m_file_function
+  use m_polynom
+  use m_matrix
+  use m_acoustic
+  use m_init_application
+  use m_animation
+
+  implicit none
+
+  !*************** Main Variables ***********************************************
+  type(acoustic_problem)              :: forward
+
+  real(mp)                            :: t
+  integer                             :: i,j,k
+  integer                             :: forward_n_time_step
+  !******************************************************************************
+
+  real(mp),parameter :: mp_test=1.0
+
+  print*,'test my precision :',kind(mp_test)
+  
+  call setup_parameters('forward')
+  final_time=10
+  time_scheme='RK4'
+  bernstein=.true.
+  signal='ricker'
+  animation='data_forward'
+  gnuplot=.false.
+
+  ! ----------- BERNSTEIN ------------------------------------
+  call init_polynom(order)
+
+  call init_acoustic_problem(forward,nb_elem,DoF,time_scheme,velocity_data,     &
+                             density_data,total_length,final_time,alpha,        &
+                             bernstein,signal,boundaries,source_loc,receiver_loc)
+
+  forward_n_time_step=forward%n_time_step
+
+  t=0
+  if (animation.eq.'data_forward') then
+     call print_coef(forward%P,nb_elem,DoF,forward%dx,bernstein,0,'FP')
+  end if
+  do i=1,forward%n_time_step
+     t=i*forward%dt
+     call progress_bar(i,forward%n_time_step)
+     call one_forward_step(forward,t)
+     if (animation.eq.'data_forward')  then
+        if (modulo(i,frame_step).eq.0) then
+           call print_coef(forward%P,nb_elem,DoF,forward%dx,bernstein,i,'FP')
+        end if
+     end if
+  end do
+
+  print*,'test P :',minval(abs(forward%P)),maxval(abs(forward%P))
+  print*,'test U :',minval(abs(forward%U)),maxval(abs(forward%U))
+  
+  call free_acoustic_problem(forward)
+
+  !--------------------- Animation ----------------------------------------------
+  call gif_creation(gnuplot,animation,frame_step,forward_n_time_step,0)
+
+  !------------------------ Free Variables --------------------------------------
+  call free_polynom
+
+end program main

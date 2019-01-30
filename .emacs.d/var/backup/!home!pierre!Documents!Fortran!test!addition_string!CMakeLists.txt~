@@ -1,0 +1,39 @@
+cmake_minimum_required (VERSION 2.8)
+
+if(NOT WIN32)
+  string(ASCII 27 Esc)
+  set(ColourReset "${Esc}[m")
+  set(Green       "${Esc}[32m")
+  set(BoldRed     "${Esc}[1;31m")
+  set(BoldGreen   "${Esc}[1;32m")
+endif()
+
+project(TEST_KIND)
+enable_language(Fortran)
+
+# Define source files
+file(GLOB SRC "*90")
+
+# Libraries
+
+#--------------------- APPLICATIONS ---------------------------
+
+# FORWARD APPLICATION
+#set sources
+set(app_src ${SRC})
+add_executable(app ${app_src})
+target_compile_options(app PRIVATE -DKIND_REAL=dp)
+message(" ${BoldGreen}APPLICATION CREATED !!! ${ColourReset}")
+
+
+#------------------ CUSTOM TARGETS --------------------
+add_custom_target(data_clean
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_SOURCE_DIR}/Files/*.dat
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_SOURCE_DIR}/build/fort.*
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_SOURCE_DIR}/build/*.gif
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_SOURCE_DIR}/build/*.dat
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_SOURCE_DIR}/build/*.a)
+
+add_custom_target(cleanall
+  COMMAND make clean
+  COMMAND make data_clean)
