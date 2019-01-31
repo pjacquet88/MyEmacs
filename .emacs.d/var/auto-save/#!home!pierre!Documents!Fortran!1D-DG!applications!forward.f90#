@@ -20,7 +20,7 @@ program main
   !******************************************************************************
 
   
-  call setup_parameters('for*ward')
+  call setup_parameters('forward')
   call print_selected_parameters('fwi')
 
   !*********** Polynomial initialization *************

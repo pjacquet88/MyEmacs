@@ -1,1 +1,1 @@
-("~/Documents/MyEmacs/" "~/Documents/Fortran/" "~/Documents/" "~/Documents/Total/Projects/")
+("~/Documents/Fortran/" "~/Documents/" "~/Documents/MyEmacs/" "~/Documents/Total/Projects/")

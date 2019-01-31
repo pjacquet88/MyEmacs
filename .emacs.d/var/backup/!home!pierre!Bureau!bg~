@@ -1,0 +1,17 @@
+;; (custom-set-variables '(spacemacs-theme-custom-colors
+;; 			'((border . "#339933")
+;; 			  (bg1 . "#212936")
+;; 			  (bg2 . "#212936")
+;; 			  (comment-bg . "#212936")
+;; 			  (head1-bg . "#212936")
+;; 			  (head2-bg . "#212936")
+;; 			  (head3-bg . "#212936")
+;; 			  (head4-bg . "#212936")
+;; 			  (cblk-ln-bg . "#212936")
+;; 			  (cblk-bg . "#212936"))))
+
+
+;;  ;; bg1 de base = #292b2e
+;;  ;; test 1 #212936
+;;  ;; test2 #292b3e
+

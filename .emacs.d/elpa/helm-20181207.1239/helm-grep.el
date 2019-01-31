@@ -192,7 +192,7 @@ instead of an external command."
   :group 'helm-grep
   :type 'boolean)
 
-(defcustom helm-grep-file-path-style 'basename
+(defcustom helm-grep-file-path-style 'relative
   "File path display style when grep results are displayed.
 Possible value are:
     basename: displays only the filename, none of the directory path

@@ -8,7 +8,7 @@
  (rear-context-string . "7 11:32 tRTM_DG\n")
  (position . 383))
 ("main-Bernstein"
- (filename . "~/Documents/Fortran/Bernstein/main.f90")
+ (filename . "~/Documents/Fortran/Bernstein/applications/fwi.f90")
  (front-context-string . "  use m_adjoint\n")
  (rear-context-string . " use m_acoustic\n")
  (position . 84))
