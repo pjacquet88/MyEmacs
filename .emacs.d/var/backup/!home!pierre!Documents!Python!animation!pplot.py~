@@ -6,16 +6,17 @@ if (len(sys.argv)==2):
     file_name=str(sys.argv[1])
 
     file=np.loadtxt(file_name)
+    graph=plt.plot(file[:,0],file[:,1],label='graph',color='blue')
 
     plt.xlabel("x")
     plt.ylabel("y")
-    plot.legend(file_name)
+    plt.legend([file_name])
+    
+    plt.show()
 
-    graph=plt.plot(file[:,0],file[:,1],label='graph',color='blue')
-
-    plt.show()    
-
+    from matplotlib2tikz import save as tikz_save
+    tikz_save("test.tex")
+   
 else:
     print("File name needed")
     sys.exit()
-    
