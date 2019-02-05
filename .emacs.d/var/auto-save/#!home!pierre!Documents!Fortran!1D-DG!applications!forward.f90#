@@ -19,11 +19,15 @@ program main
   real(mp),dimension(:,:),allocatable :: data_U
   !******************************************************************************
 
+  real(mp),parameter :: mp_test=1.0
+
+  print*,'test my precision :',kind(mp_test)
+
   
   call setup_parameters('forward')
-  call print_selected_parameters('fwi')
+  call print_selected_parameters('forward')
 
-  !*********** Polynomial initialization *************
+  
   call init_polynom(order)
 
   call init_acoustic_problem(forward,nb_elem,DoF,time_scheme,velocity_data,     &
@@ -62,10 +66,10 @@ program main
 
   call free_acoustic_problem(forward)
 
-  !********************* Animation **********************************************
+  !--------------------- Animation ----------------------------------------------
   call gif_creation(gnuplot,animation,frame_step,forward_n_time_step,0)
 
-  !************************ Free Variables **************************************
+  !------------------------ Free Variables --------------------------------------
   call free_polynom
 
 end program main
