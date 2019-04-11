@@ -57,7 +57,6 @@ There are two things you can do about this warning:
 
 
 
-
 ;; ------- MY CONFIG START HERE --------------------------
 
 ;; Move ~ and # file into : ~/.emacs.d/var/backup/
@@ -72,6 +71,8 @@ There are two things you can do about this warning:
 (setq fci-rule-width 2)
 (setq fci-rule-color "orange")
 (global-set-key [f7] 'fci-mode)
+
+
 
 
 
@@ -170,3 +171,9 @@ There are two things you can do about this warning:
  '(global-hl-line-mode t)
  '(helm-grep-file-path-style (quote relative))
  '(inhibit-startup-screen t))
+
+(setq f90-do-indent 2
+      f90-if-indent 2
+      f90-type-indent 2
+      f90-structure-indent 2
+      f90-program-indent 2)
