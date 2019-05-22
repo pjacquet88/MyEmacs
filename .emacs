@@ -158,6 +158,9 @@ There are two things you can do about this warning:
 (setq whitespace-style '(space-mark))
 (setq whitespace-display-mappings '((space-mark 32 [183] [46])))
 
+;; suppress whitespace trailing before saving
+(add-hook 'before-save-hook
+          'delete-trailing-whitespace)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
