@@ -56,7 +56,6 @@ There are two things you can do about this warning:
 
 
 
-
 ;; ------- MY CONFIG START HERE --------------------------
 
 ;; Move ~ and # file into : ~/.emacs.d/var/backup/
@@ -111,10 +110,12 @@ There are two things you can do about this warning:
 ;; Change the cursor
 (setq-default cursor-type 'bar)
 
+;; GLOBAL COMPILATION
+(global-set-key (kbd "<f1>") 'recompile)
 
 ;;     STUFF FOT LATEX
 ;; F1 = launch compile.sh script
-(global-set-key (kbd "<f1>") (kbd "M-! sh SPC compile.sh RET"))
+;;(global-set-key (kbd "<f1>") (kbd "M-! sh SPC compile.sh RET"))
 ;; LATEX Shortcuts
 (global-set-key (kbd "C-$ C-$") (kbd "$\\$ <left>"))
 (global-set-key (kbd "C-ù C-ù") (kbd "\\begin{} RET RET \\end{} <up> <up> <right>"))
@@ -175,8 +176,22 @@ There are two things you can do about this warning:
  '(helm-grep-file-path-style (quote relative))
  '(inhibit-startup-screen t))
 
+
+;; Fortran Total complient
 (setq f90-do-indent 2
       f90-if-indent 2
       f90-type-indent 2
       f90-structure-indent 2
       f90-program-indent 2)
+
+
+;; Flycheck
+(global-flycheck-mode)
+
+;; MATLAB
+ (autoload 'matlab-mode "matlab" "Matlab Editing Mode" t)
+ (add-to-list
+  'auto-mode-alist
+  '("\\.m$" . matlab-mode))
+ (setq matlab-indent-function t)
+ (setq matlab-shell-command "matlab")
