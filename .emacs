@@ -27,6 +27,8 @@
  '(linum ((t (:inherit default :foreground "gray42" :strike-through nil :underline nil :slant normal :weight normal))))
  '(mode-line ((t (:background "dark slate gray" :box nil))))
  '(mode-line-buffer-id ((t (:inherit bold :foreground "khaki" :weight bold))))
+ '(treemacs-git-modified-face ((t (:foreground "orange red"))))
+ '(treemacs-git-unmodified-face ((t (:inherit treemacs-file-face :foreground "medium spring green"))))
  '(vertical-border ((t (:background "white" :foreground "white")))))
 
 (require 'package)
@@ -174,7 +176,11 @@ There are two things you can do about this warning:
     ("a3fa4abaf08cc169b61dea8f6df1bbe4123ec1d2afeb01c17e11fdc31fc66379" "d2e9c7e31e574bf38f4b0fb927aaff20c1e5f92f72001102758005e53d77b8c9" "75d3dde259ce79660bac8e9e237b55674b910b470f313cdf4b019230d01a982a" "ecba61c2239fbef776a72b65295b88e5534e458dfe3e6d7d9f9cb353448a569e" "b54826e5d9978d59f9e0a169bbd4739dd927eead3ef65f56786621b53c031a7c" "6b2636879127bf6124ce541b1b2824800afc49c6ccd65439d6eb987dbf200c36" "6d589ac0e52375d311afaa745205abb6ccb3b21f6ba037104d71111e7e76a3fc" "7e78a1030293619094ea6ae80a7579a562068087080e01c2b8b503b27900165c" default)))
  '(global-hl-line-mode t)
  '(helm-grep-file-path-style (quote relative))
- '(inhibit-startup-screen t))
+ '(inhibit-startup-screen t)
+ '(package-selected-packages
+   (quote
+    (treemacs no-littering neotree magit helm-projectile ggtags fill-column-indicator doom-themes centaur-tabs auto-correct auto-complete)))
+ '(treemacs-git-mode (quote deferred)))
 
 
 ;; Fortran Total complient
@@ -184,14 +190,43 @@ There are two things you can do about this warning:
       f90-structure-indent 2
       f90-program-indent 2)
 
-
-;; Flycheck
-(global-flycheck-mode)
-
 ;; MATLAB
  (autoload 'matlab-mode "matlab" "Matlab Editing Mode" t)
  (add-to-list
   'auto-mode-alist
   '("\\.m$" . matlab-mode))
  (setq matlab-indent-function t)
- (setq matlab-shell-command "matlab")
+(setq matlab-shell-command "matlab")
+
+;; Note: can't also pickup error description because flymake
+;; parses errors one line at a time -- multi-line error output
+;; would need to be handled with a helper script or a new elisp
+;; function.
+
+
+(require 'all-the-icons)
+(setq flycheck-gfortran-language-standard "f2008")
+(setq flycheck-gfortran-warnings '("all" "unused"))
+(setq flycheck-gfortran-args '("-Wunderflow" "-Wextra"))
+(setq flycheck-gfortran-include-path '("../include"))
+
+
+;; treemacs
+;;(treemacs t)
+(global-set-key [f8] 'treemacs)
+
+;; centaur
+
+(centaur-tabs-mode t)
+;; (global-set-key (kbd "C-<prior>")  'centaur-tabs-backward)
+(global-set-key (kbd "<C-tab>") 'centaur-tabs-forward)
+(setq centaur-tabs-set-icons t)
+
+(setq centaur-tabs-set-modified-marker t)
+(setq centaur-tabs-modified-marker (all-the-icons-octicon   "chevron-down"))
+(setq centaur-tabs-cycle-scope 'tabs)
+(setq centaur-tabs-set-bar 'left)
+
+(defvar centaur-tabs-icon-v-adjust
+  0.05
+  "The vertical adjust for tab icons.")
