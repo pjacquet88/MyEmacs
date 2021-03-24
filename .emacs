@@ -2,8 +2,9 @@
 ;; installed packages.  Don't delete this line.  If you don't want it,
 ;; just comment it out by adding a semicolon to the start of the line.
 ;; You may delete these explanatory comments.
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 (package-initialize)
-
+;; (setq package-check-signature nill)
 ;;; Set location for external packages.
 (add-to-list 'load-path "~/.emacs.d/some_el_file")
 
@@ -42,16 +43,26 @@ which is unsafe because it allows man-in-the-middle attacks.
 There are two things you can do about this warning:
 1. Install an Emacs version that does support SSL and be safe.
 2. Remove this warning from your init file so you won't see it again."))
-  ;; Comment/uncomment these two lines to enable/disable MELPA and MELPA Stable as desired
-  (add-to-list 'package-archives (cons "melpa" (concat proto "://melpa.org/packages/")) t)
-  ;;(add-to-list 'package-archives (cons "melpa-stable" (concat proto "://stable.melpa.org/packages/")) t)
-  (when (< emacs-major-version 24)
-    ;; For important compatibility libraries like cl-lib
-    (add-to-list 'package-archives (cons "gnu" (concat proto "://elpa.gnu.org/packages/")))))
-(package-initialize)
+;;   ;; Comment/uncomment these two lines to enable/disable MELPA and MELPA Stable as desired
+;;   (add-to-list 'package-archives (cons "melpa" (concat proto "https://melpa.org/packages/")) t)
+;;   ;;(add-to-list 'package-archives (cons "melpa-stable" (concat proto "://stable.melpa.org/packages/")) t)
+;;   (when (< emacs-major-version 24)
+;;     ;; For important compatibility libraries like cl-lib
+;;     (add-to-list 'package-archives (cons "gnu" (concat proto "https://elpa.gnu.org/packages/")))))
+;; (package-initialize)
+;; (setq package-enable-at-startup nil)  ; (New.)
+;; (add-to-list 'package-archives
+;; 	     '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+)
 
 (add-to-list 'package-archives
-	     '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+             '("melpa" . "http://melpa.org/packages/") t)
+(add-to-list 'package-archives
+             '("melpa-stable" . "http://stable.melpa.org/packages/") t)
+;; (add-to-list 'package-archives
+;; 	     '("marmalade" . "https://marmalade-repo.org/packages/") t)
+(add-to-list 'package-archives
+             '("gnu elpa" . "https://elpa.gnu.org/packages/") t)
 
 (ac-config-default)
 
@@ -113,11 +124,11 @@ There are two things you can do about this warning:
 (setq-default cursor-type 'bar)
 
 ;; GLOBAL COMPILATION
-(global-set-key (kbd "<f1>") 'recompile)
+(global-set-key (kbd "<f5>") 'recompile)
 
 ;;     STUFF FOT LATEX
 ;; F1 = launch compile.sh script
-;;(global-set-key (kbd "<f1>") (kbd "M-! sh SPC compile.sh RET"))
+(global-set-key (kbd "<f1>") (kbd "M-! sh SPC compile.sh RET"))
 ;; LATEX Shortcuts
 (global-set-key (kbd "C-$ C-$") (kbd "$\\$ <left>"))
 (global-set-key (kbd "C-ù C-ù") (kbd "\\begin{} RET RET \\end{} <up> <up> <right>"))
@@ -179,8 +190,11 @@ There are two things you can do about this warning:
  '(inhibit-startup-screen t)
  '(package-selected-packages
    (quote
-    (treemacs no-littering neotree magit helm-projectile ggtags fill-column-indicator doom-themes centaur-tabs auto-correct auto-complete)))
+    (gnu-elpa langtool flycheck gnu-elpa-keyring-update treemacs no-littering neotree multiple-cursors magit ivy helm-projectile ggtags fill-column-indicator doom-themes centaur-tabs auto-correct auto-complete)))
  '(treemacs-git-mode (quote deferred)))
+
+
+
 
 
 ;; Fortran Total complient
@@ -189,6 +203,8 @@ There are two things you can do about this warning:
       f90-type-indent 2
       f90-structure-indent 2
       f90-program-indent 2)
+
+
 
 ;; MATLAB
  (autoload 'matlab-mode "matlab" "Matlab Editing Mode" t)
@@ -204,19 +220,21 @@ There are two things you can do about this warning:
 ;; function.
 
 
-(require 'all-the-icons)
-(setq flycheck-gfortran-language-standard "f2008")
-(setq flycheck-gfortran-warnings '("all" "unused"))
-(setq flycheck-gfortran-args '("-Wunderflow" "-Wextra"))
-(setq flycheck-gfortran-include-path '("../include"))
+
+
+;; Tool bar = none
+(tool-bar-mode -1)
+
 
 
 ;; treemacs
 ;;(treemacs t)
-(global-set-key [f8] 'treemacs)
+(global-set-key [f2] 'treemacs)
+
+
+
 
 ;; centaur
-
 (centaur-tabs-mode t)
 ;; (global-set-key (kbd "C-<prior>")  'centaur-tabs-backward)
 (global-set-key (kbd "<C-tab>") 'centaur-tabs-forward)
@@ -230,3 +248,66 @@ There are two things you can do about this warning:
 (defvar centaur-tabs-icon-v-adjust
   0.05
   "The vertical adjust for tab icons.")
+
+(require 'all-the-icons)
+(setq flycheck-gfortran-language-standard "f2008")
+(setq flycheck-gfortran-warnings '("all" "unused"))
+(setq flycheck-gfortran-args '("-Wunderflow" "-Wextra"))
+(setq flycheck-gfortran-include-path '("../include"))
+
+
+
+
+
+;; Multiple cursor
+(require 'multiple-cursors)
+(global-set-key (kbd "C-<") 'mc/mark-next-like-this)
+(global-set-key (kbd "C->") 'mc/mark-previous-like-this)
+(global-set-key (kbd "C-q") 'mc/mark-all-like-this)
+
+
+
+
+;;;;;;;;;;;;;;;;;;;; SPELLING SECTION FOR LATEX ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; Get ispell activated and change language
+;; F3 ispell on/off
+;; F4 change to english
+;; F5 change to french
+(if (file-exists-p "/usr/bin/hunspell")
+    (progn
+      (setq ispell-program-name "hunspell")
+      (eval-after-load "ispell"
+        '(progn (defun ispell-get-coding-system () 'utf-8)))))
+
+
+(global-set-key [f3] 'flyspell-mode)
+(add-hook 'LaTeX-mode-hook 'flyspell-mode)
+
+
+(global-set-key
+ [f4]
+ (lambda ()
+   (interactive)
+   (ispell-change-dictionary "english")))
+(global-set-key
+ [f5]
+ (lambda ()
+   (interactive)
+   (ispell-change-dictionary "français")))
+
+
+(setq langtool-language-tool-jar "~/Documents/LanguageTool-5.1/languagetool-commandline.jar")
+(require 'ert)
+(require 'langtool)
+
+(defun check-global-spell-commands ()
+  (interactive)
+  (ispell-change-dictionary "english")
+  (langtool-check-buffer)
+  (flyspell-buffer))
+
+
+(global-set-key  (kbd "<backtab>") 'flyspell-goto-next-error)
+(global-set-key  [f6] 'check-global-spell-commands)
