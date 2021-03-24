@@ -236,9 +236,15 @@ There are two things you can do about this warning:
 
 ;; centaur
 (centaur-tabs-mode t)
-;; (global-set-key (kbd "C-<prior>")  'centaur-tabs-backward)
+(global-set-key (kbd "C-<prior>")  'centaur-tabs-backward)
 (global-set-key (kbd "<C-tab>") 'centaur-tabs-forward)
 (setq centaur-tabs-set-icons t)
+
+(require 'all-the-icons)
+(setq flycheck-gfortran-language-standard "f2008")
+(setq flycheck-gfortran-warnings '("all" "unused"))
+(setq flycheck-gfortran-args '("-Wunderflow" "-Wextra"))
+(setq flycheck-gfortran-include-path '("../include"))
 
 (setq centaur-tabs-set-modified-marker t)
 (setq centaur-tabs-modified-marker (all-the-icons-octicon   "chevron-down"))
@@ -246,14 +252,10 @@ There are two things you can do about this warning:
 (setq centaur-tabs-set-bar 'left)
 
 (defvar centaur-tabs-icon-v-adjust
-  0.05
-  "The vertical adjust for tab icons.")
+ 0.05
+ "The vertical adjust for tab icons.")
 
-(require 'all-the-icons)
-(setq flycheck-gfortran-language-standard "f2008")
-(setq flycheck-gfortran-warnings '("all" "unused"))
-(setq flycheck-gfortran-args '("-Wunderflow" "-Wextra"))
-(setq flycheck-gfortran-include-path '("../include"))
+
 
 
 
