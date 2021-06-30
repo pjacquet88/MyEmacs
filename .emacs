@@ -92,6 +92,7 @@ There are two things you can do about this warning:
 
 ;; C-x C-c C-v C-z C-ENTER
 (cua-mode 1)
+(global-set-key (kbd "M-RET") 'cua-rectangle-mark-mode)
 
 ;; Supress Emacs sound
 (setq ring-bell-function 'ignore)
@@ -207,11 +208,11 @@ There are two things you can do about this warning:
 
 
 ;; MATLAB
- (autoload 'matlab-mode "matlab" "Matlab Editing Mode" t)
- (add-to-list
-  'auto-mode-alist
-  '("\\.m$" . matlab-mode))
- (setq matlab-indent-function t)
+(autoload 'matlab-mode "matlab" "Matlab Editing Mode" t)
+(add-to-list
+ 'auto-mode-alist
+ '("\\.m$" . matlab-mode))
+(setq matlab-indent-function t)
 (setq matlab-shell-command "matlab")
 
 ;; Note: can't also pickup error description because flymake
@@ -256,60 +257,44 @@ There are two things you can do about this warning:
  "The vertical adjust for tab icons.")
 
 
-
-
-
-
-
 ;; Multiple cursor
 (require 'multiple-cursors)
-(global-set-key (kbd "C-<") 'mc/mark-next-like-this)
-(global-set-key (kbd "C->") 'mc/mark-previous-like-this)
-(global-set-key (kbd "C-q") 'mc/mark-all-like-this)
+(global-set-key (kbd "M-<") 'mc/mark-next-like-this)
+(global-set-key (kbd "M->") 'mc/mark-previous-like-this)
+(global-set-key (kbd "M-q") 'mc/mark-all-like-this)
 
 
-
-
-;;;;;;;;;;;;;;;;;;;; SPELLING SECTION FOR LATEX ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;; SPELLING SECTION ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 ;; Get ispell activated and change language
-;; F3 ispell on/off
-;; F4 change to english
-;; F5 change to french
+;; M-f check all buffer for french mistakes
+;; M-e check all buffer for english mistakes
 (if (file-exists-p "/usr/bin/hunspell")
     (progn
       (setq ispell-program-name "hunspell")
       (eval-after-load "ispell"
         '(progn (defun ispell-get-coding-system () 'utf-8)))))
 
-
-(global-set-key [f3] 'flyspell-mode)
-(add-hook 'LaTeX-mode-hook 'flyspell-mode)
-
-
-(global-set-key
- [f4]
- (lambda ()
-   (interactive)
-   (ispell-change-dictionary "english")))
-(global-set-key
- [f5]
- (lambda ()
-   (interactive)
-   (ispell-change-dictionary "français")))
-
-
 (setq langtool-language-tool-jar "~/Documents/LanguageTool-5.1/languagetool-commandline.jar")
 (require 'ert)
 (require 'langtool)
 
-(defun check-global-spell-commands ()
+(defun check-global-spell-commands_en ()
   (interactive)
   (ispell-change-dictionary "english")
   (langtool-check-buffer)
-  (flyspell-buffer))
+  (flyspell-buffer)
+  (flyspell-mode))
+
+(defun check-global-spell-commands_fr ()
+  (interactive)
+  (ispell-change-dictionary "fr")
+  (langtool-check-buffer)
+  (flyspell-buffer)
+  (flyspell-mode))
 
 
 (global-set-key  (kbd "<backtab>") 'flyspell-goto-next-error)
-(global-set-key  [f6] 'check-global-spell-commands)
+(global-set-key (kbd "M-f") 'check-global-spell-commands_fr)
+(global-set-key (kbd "M-e") 'check-global-spell-commands_en)
